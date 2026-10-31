@@ -1,0 +1,16 @@
+{
+  "kind": "complaint",
+  "messages": [
+    {
+      "role": "player",
+      "text": "Игрок оскорблял меня и мою семью в чате, скриншоты есть, 2.1 ОП",
+      "attachments": 2
+    }
+  ],
+  "reported_nick": "Arman_Petrov",
+  "images_count": 2,
+  "region": "kz",
+  "server_lang": "kk",
+  "lang": "ru",
+  "rule_refs_raw": "2.1"
+}

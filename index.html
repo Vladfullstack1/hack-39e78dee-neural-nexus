@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Grand Mobile · Support Copilot</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0a0c12;--panel:#121722;--line:#253044;--text:#edf2fb;--muted:#93a0b5;--accent:#8b7cff;--good:#67d7b2;--warn:#f2c879}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0%,#201b42 0,transparent 45%),var(--bg);color:var(--text);font:15px/1.5 Inter,Segoe UI,Arial,sans-serif}
+    main{max-width:1120px;margin:36px auto;padding:0 20px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}.brand{font-size:13px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}.title{font-size:30px;font-weight:750;letter-spacing:-.04em;margin:5px 0}.sub{color:var(--muted)}.pill{border:1px solid var(--line);border-radius:999px;padding:7px 12px;color:var(--good);font-size:12px}
+    .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}.panel{background:linear-gradient(160deg,#151c29,#10151f);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 18px 50px #0005}h2{font-size:16px;margin:0 0 14px}label{display:block;color:var(--muted);font-size:12px;margin:12px 0 6px}select,textarea,input{width:100%;background:#0b1019;color:var(--text);border:1px solid #2c374a;border-radius:10px;padding:11px 12px;font:inherit;outline:none}textarea{min-height:190px;resize:vertical}button{margin-top:14px;border:0;border-radius:10px;padding:12px 18px;background:var(--accent);color:white;font-weight:700;cursor:pointer}button:disabled{opacity:.6;cursor:wait}.muted{color:var(--muted)}.empty{min-height:275px;display:grid;place-items:center;color:var(--muted);text-align:center}.result{display:none}.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.chip{background:#20283a;border:1px solid #303b52;border-radius:8px;padding:5px 9px;font-size:12px}.card{border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:12px;background:#0d131d}.card h3{font-size:13px;color:var(--muted);margin:0 0 7px}.answer{white-space:pre-wrap}.small{font-size:12px;color:var(--muted)}pre{white-space:pre-wrap;word-break:break-word;font-size:12px;color:#cbd5e1}.error{color:#ff9b9b;margin-top:12px}@media(max-width:800px){.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
+  </style>
+</head>
+<body><main>
+  <div class="top"><div><div class="brand">Grand Mobile × Decentrathon 6.0</div><div class="title">Support Copilot</div><div class="sub">Триаж обращений · поиск по правилам · черновик ответа</div></div><div class="pill" id="status">● API готовится</div></div>
+  <div class="grid">
+    <section class="panel"><h2>Новое обращение</h2>
+      <label for="kind">Тип обращения</label><select id="kind"><option value="complaint">Жалоба на игрока</option><option value="report">Внутриигровой репорт</option></select>
+      <label for="lang">Язык (можно оставить авто)</label><select id="lang"><option value="">Автоопределение</option><option value="ru">Русский</option><option value="kk">Қазақша</option><option value="uz">O‘zbekcha</option><option value="en">English</option></select>
+      <label for="nick">Ник обвиняемого (необязательно)</label><input id="nick" placeholder="Player_Nick">
+      <label for="images">Количество скриншотов/вложений</label><input id="images" type="number" min="0" value="0">
+      <label for="text">Текст обращения игрока</label><textarea id="text" placeholder="Например: игрок оскорблял меня и мою семью в чате, скриншоты есть, пункт 2.1..."></textarea>
+      <button id="submit">Проанализировать обращение</button><div class="error" id="error"></div>
+    </section>
+    <section class="panel"><h2>Результат анализа</h2><div class="empty" id="empty">Заполните обращение и нажмите<br>«Проанализировать обращение».</div>
+      <div class="result" id="result"><div class="chips" id="chips"></div>
+        <div class="card"><h3>Черновик ответа · можно отредактировать</h3><textarea id="editDraft" class="editbox"></textarea><div class="small" id="citations"></div><button class="secondary" id="copyDraft">Скопировать</button><button id="saveEdit">Сохранить правку</button><button class="secondary" id="escalate">Эскалировать</button><div class="small" id="feedbackStatus"></div></div>
+        <div class="card"><h3>Извлечённые факты</h3><pre id="facts"></pre></div>
+        <div class="card"><h3>Почему нужна проверка</h3><div id="reasons" class="small"></div></div>
+        <div class="card"><h3>Найденные пункты правил (RAG)</h3><div id="rules" class="small"></div></div>
+        <div class="card"><h3>Производительность</h3><div id="perf" class="small"></div></div>
+      </div>
+      <div class="card"><h3>Очередь администратора</h3><div id="queueList" class="small">Пока обращений нет.</div></div>
+    </section>
+  </div>
+  <p class="small" style="margin-top:18px">Решение формирует только черновики. Действие «Скопировать» не отправляет ответ в игру: доступ к API Grand Mobile по условиям кейса не предоставляется.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let currentTicketId=null;
+let originalDraft="";
+async function check(){try{const r=await fetch('/health');const d=await r.json();$('status').textContent=`● API онлайн · правил: ${d.rules_loaded}`;$('status').style.color=d.rules_loaded?'var(--good)':'var(--warn)';loadQueue()}catch{$('status').textContent='● API недоступен'}}
+async function loadQueue(){try{const r=await fetch('/admin/queue?limit=8');const data=await r.json();const items=data.items||[];$('queueList').innerHTML=items.length?items.map(x=>`<div class="queueitem"><b>${escapeHtml(x.ticket_id.slice(0,8))}</b> · ${escapeHtml(x.category)} · ${escapeHtml(x.priority)} · ${x.needs_human?'нужен человек':'черновик готов'}<br><span class="muted">${escapeHtml(x.status)} · ${escapeHtml(x.created_at.slice(0,19).replace('T',' '))}</span></div>`).join(''):'Пока обращений нет.'}catch{}}
+$('submit').addEventListener('click',async()=>{
+ const text=$('text').value.trim();if(!text){$('error').textContent='Введите текст обращения.';return}
+ $('error').textContent='';$('submit').disabled=true;$('submit').textContent='Анализируем…';
+ const payload={kind:$('kind').value,messages:[{role:'player',text,attachments:Number($('images').value||0)}],reported_nick:$('nick').value||null,images_count:Number($('images').value||0),lang:$('lang').value||null};
+ try{const response=await fetch('/triage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const d=await response.json();if(!response.ok)throw new Error(d.detail||'Ошибка API');
+ $('empty').style.display='none';$('result').style.display='block';$('chips').innerHTML='';
+ [`Язык: ${d.lang}`,`Категория: ${d.category}`,`Приоритет: ${d.priority}`,`Уверенность: ${Math.round(d.confidence*100)}%`,d.needs_human?'Нужен администратор':'Можно обработать автоматически',d.is_spam_or_duplicate?'Спам/дубликат':'Не спам'].forEach(v=>{const s=document.createElement('span');s.className='chip';s.textContent=v;$('chips').appendChild(s)});
+ currentTicketId=d.ticket_id;originalDraft=d.draft_reply.text;$('editDraft').value=d.draft_reply.text;$('feedbackStatus').textContent='';$('citations').textContent=d.draft_reply.cited.length?'Цитаты: '+d.draft_reply.cited.join(', '):'Цитаты правил не приложены';$('facts').textContent=JSON.stringify(d.extracted,null,2);
+ $('reasons').textContent=d.reasons.join(' · ')||'Дополнительные причины не указаны';$('rules').innerHTML=d.retrieval.length?d.retrieval.map(x=>`<div style="margin-bottom:10px"><b>${escapeHtml(x.rule_id)}</b> · ${escapeHtml(x.text)} <span class="muted">(score ${x.score})</span></div>`).join(''):'Официальные правила не загружены или совпадений не найдено.';
+ $('perf').textContent=`${d.processing.latency_ms} мс · LLM: ${d.processing.llm_used?'использована':'не использовалась'} · внешняя API-стоимость: ${d.processing.estimated_cost_usd==null?'не рассчитана (цены не заданы)': '$'+d.processing.estimated_cost_usd}`;loadQueue();
+ }catch(e){$('error').textContent=e.message}finally{$('submit').disabled=false;$('submit').textContent='Проанализировать обращение'}
+});
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('copyDraft').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('editDraft').value);$('feedbackStatus').textContent='Черновик скопирован.'}catch{$('feedbackStatus').textContent='Не удалось скопировать автоматически.'}});
+async function sendFeedback(action){if(!currentTicketId){$('feedbackStatus').textContent='Сначала проанализируйте обращение.';return}try{const body={ticket_id:currentTicketId,action,original_draft:originalDraft,edited_draft:$('editDraft').value,note:action==='escalated'?'Передано администратору':''};const r=await fetch('/admin/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error('Ошибка сохранения');$('feedbackStatus').textContent=action==='edited'?'Правка сохранена как обучающий сигнал.':'Обращение отмечено для эскалации.';loadQueue()}catch(e){$('feedbackStatus').textContent=e.message}}
+$('saveEdit').addEventListener('click',()=>sendFeedback('edited'));
+$('escalate').addEventListener('click',()=>sendFeedback('escalated'));
+check();
+</script></body></html>

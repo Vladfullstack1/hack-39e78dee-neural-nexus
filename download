@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+tickets_train.jsonl.gz
+tickets_valid.jsonl
+tickets_hidden.jsonl
+*.csv
+*.jsonl
+*.jsonl.gz
+!data/*.json
+!reports/*.json
+data/*.sqlite3
+data/*.sqlite3-shm
+data/*.sqlite3-wal

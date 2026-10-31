@@ -1,0 +1,20 @@
+{
+  "source_rows": 1000,
+  "prediction_rows": 1000,
+  "matched_rows": 1000,
+  "supervised_labels_available": {
+    "category": 0,
+    "priority": 0
+  },
+  "category_accuracy": null,
+  "priority_macro_f1": null,
+  "avg_latency_ms": 1.6,
+  "p95_latency_ms": 2.71,
+  "rule_retrieval_coverage": 0.938,
+  "draft_citation_rate": 0.937,
+  "needs_human_rate": 0.818,
+  "spam_or_duplicate_rate": 0.001,
+  "avg_estimated_cost_usd": 0.0,
+  "cost_samples": 1000,
+  "note": "Если category/priority отсутствуют в исходном файле (как в tickets_valid.jsonl по ТЗ), Accuracy и Macro-F1 не рассчитываются. Это не ноль и не оценка модели."
+}
